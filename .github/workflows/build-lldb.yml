@@ -1,0 +1,159 @@
+name: Build LLDB Components
+
+on:
+  workflow_call:
+    inputs:
+      llvm-ref:
+        description: ref/tag for llvm-project
+        default: main
+        required: false
+        type: string
+
+      android-ndk-version:
+        description: version of Android NDK
+        default: r21e
+        required: false
+        type: string
+
+      android-platform:
+        description: target Android platform
+        default: android-21
+        required: false
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      llvm-ref:
+        description: ref/tag for llvm-project
+        default: main
+        required: false
+        type: string
+
+      android-ndk-version:
+        description: version of Android NDK
+        default: r21e
+        required: false
+        type: string
+
+      android-platform:
+        description: target Android platform
+        default: android-21
+        required: false
+        type: string
+
+env:
+  SCCACHE_DIRECT: yes
+
+jobs:
+  build-lldb-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Setup sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: lldb-${{ runner.os }}-${{ runner.arch }}
+          variant: sccache
+
+      - name: Checkout llvm project
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: ${{ inputs.llvm-ref }}
+          path: ${{ github.workspace }}/SourceCache/llvm
+
+      # Build clang and a Python-enabled lldb binary to execute the lldb tests
+      - name: Configure lldb build
+        run: |
+          cmake -B ${{ github.workspace }}/BinaryCache/llvm                     \
+                -S ${{ github.workspace }}/SourceCache/llvm/llvm                \
+                -D LLVM_ENABLE_PROJECTS='clang;lldb'                            \
+                -D LLVM_TARGETS_TO_BUILD="X86"                                  \
+                -D LLDB_ENABLE_PYTHON=On                                        \
+                -D CMAKE_C_COMPILER_LAUNCHER=sccache                            \
+                -D CMAKE_CXX_COMPILER_LAUNCHER=sccache                          \
+                -D CMAKE_BUILD_TYPE=Release                                     \
+                -G Ninja
+
+      - name: Build llvm
+        run: |
+          cmake --build  ${{ github.workspace }}/BinaryCache/llvm               \
+                --target lldb                                                   \
+                --config Release
+
+      # Tar the build output to preserve permissions.
+      - name: tar output
+        run: tar -C ${{ github.workspace }}/BinaryCache -cvf ${{ github.workspace }}/BinaryCache/llvm.tar llvm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: llvm-${{ runner.os }}-${{ runner.arch }}
+          path: ${{ github.workspace }}/BinaryCache/llvm.tar
+
+  build-lldb-server-android:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - abi: x86_64
+            triple: x86_64-unknown-linux-android
+
+    steps:
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Setup sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: lldb-android-${{ matrix.abi }}
+          variant: sccache
+
+      - name: Checkout llvm project
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: ${{ inputs.llvm-ref }}
+          path: ${{ github.workspace }}/SourceCache/llvm
+
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: ${{ inputs.android-ndk-version }}
+          local-cache: true
+
+      - name: Configure lldb build
+        run: |
+          cmake -B ${{ github.workspace }}/BinaryCache/llvm                     \
+                -S ${{ github.workspace }}/SourceCache/llvm/llvm                \
+                -D CMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake  \
+                -D CROSS_TOOLCHAIN_FLAGS_NATIVE='-DCMAKE_C_COMPILER=cc;-DCMAKE_CXX_COMPILER=c++'  \
+                -D ANDROID_ABI=${{ matrix.abi }}                                \
+                -D ANDROID_PLATFORM=${{ inputs.android-platform }}              \
+                -D ANDROID_ALLOW_UNDEFINED_SYMBOLS=On                           \
+                -D LLVM_HOST_TRIPLE=${{ matrix.triple }}                        \
+                -D LLVM_ENABLE_PROJECTS='clang;lldb'                            \
+                -D LLDB_ENABLE_PYTHON=0                                         \
+                -D LLDB_ENABLE_LIBEDIT=0                                        \
+                -D LLDB_ENABLE_CURSES=0                                         \
+                -D LLDB_INCLUDE_TESTS=OFF                                       \
+                -D CMAKE_C_COMPILER_LAUNCHER=sccache                            \
+                -D CMAKE_CXX_COMPILER_LAUNCHER=sccache                          \
+                -D CMAKE_BUILD_TYPE=Release                                     \
+                -G Ninja
+
+      - name: Build llvm
+        run: |
+          cmake --build  ${{ github.workspace }}/BinaryCache/llvm   \
+                --target lldb-server                                \
+                --config Release
+
+      # Tar the build output to preserve permissions.
+      - name: tar output
+        run: tar -C ${{ github.workspace }}/BinaryCache -cvf ${{ github.workspace }}/BinaryCache/llvm.tar llvm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: llvm-android-x86_64
+          path: ${{ github.workspace }}/BinaryCache/llvm.tar
