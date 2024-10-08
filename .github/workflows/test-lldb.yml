@@ -127,6 +127,7 @@ jobs:
       - name: untar llvm artifacts
         run: |
           tar -C ${{ github.workspace }}/BinaryCache -xvf ${{ github.workspace }}/BinaryCache/llvm.tar
+          rm -f ${{ github.workspace }}/BinaryCache/llvm.tar
 
       - uses: actions/download-artifact@v4
         with:
@@ -135,6 +136,7 @@ jobs:
       - name: untar llvm Android artifacts
         run: |
           tar -C ${{ github.workspace }}/BinaryCache -xvf ${{ github.workspace }}/BinaryCache/llvm-android.tar
+          rm -f github.workspace }}/BinaryCache/llvm-android.tar
 
       - name: Checkout llvm project
         uses: actions/checkout@v4
