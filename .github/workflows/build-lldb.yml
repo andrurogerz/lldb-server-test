@@ -157,7 +157,7 @@ jobs:
 
       - name: Configure lldb build
         run: |
-          cmake -B ${{ github.workspace }}/BinaryCache/llvm                     \
+          cmake -B ${{ github.workspace }}/BinaryCache/llvm-android             \
                 -S ${{ github.workspace }}/SourceCache/llvm/llvm                \
                 -D CMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake  \
                 -D CROSS_TOOLCHAIN_FLAGS_NATIVE='-DCMAKE_C_COMPILER=cc;-DCMAKE_CXX_COMPILER=c++'  \
@@ -166,6 +166,7 @@ jobs:
                 -D ANDROID_ALLOW_UNDEFINED_SYMBOLS=On                           \
                 -D LLVM_HOST_TRIPLE=${{ matrix.triple }}                        \
                 -D LLVM_ENABLE_PROJECTS='clang;lldb'                            \
+                -D LLVM_TARGETS_TO_BUILD="X86"                                  \
                 -D LLDB_ENABLE_PYTHON=0                                         \
                 -D LLDB_ENABLE_LIBEDIT=0                                        \
                 -D LLDB_ENABLE_CURSES=0                                         \
@@ -177,15 +178,15 @@ jobs:
 
       - name: Build llvm
         run: |
-          cmake --build  ${{ github.workspace }}/BinaryCache/llvm   \
-                --target lldb-server                                \
+          cmake --build  ${{ github.workspace }}/BinaryCache/llvm-android   \
+                --target lldb-server                                        \
                 --config Release
 
       # Tar the build output to preserve permissions.
       - name: tar output
-        run: tar -C ${{ github.workspace }}/BinaryCache -cvf ${{ github.workspace }}/BinaryCache/llvm.tar llvm
+        run: tar -C ${{ github.workspace }}/BinaryCache -cvf ${{ github.workspace }}/BinaryCache/llvm-android.tar llvm-android
 
       - uses: actions/upload-artifact@v4
         with:
-          name: llvm-android-x86_64
-          path: ${{ github.workspace }}/BinaryCache/llvm.tar
+          name: llvm-android-${{ matrix.abi }}
+          path: ${{ github.workspace }}/BinaryCache/llvm-android.tar

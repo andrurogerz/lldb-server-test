@@ -1,0 +1,209 @@
+name: Test LLDB Server
+
+on:
+  workflow_call:
+    inputs:
+      llvm-ref:
+        description: ref/tag for llvm-project
+        default: main
+        required: false
+        type: string
+
+      android-ndk-version:
+        description: version of Android NDK
+        default: r21e
+        required: false
+        type: string
+
+      android-platform:
+        description: target Android platform
+        default: android-21
+        required: false
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      llvm-ref:
+        description: ref/tag for llvm-project
+        default: main
+        required: false
+        type: string
+
+      android-ndk-version:
+        description: version of Android NDK
+        default: r21e
+        required: false
+        type: string
+
+      android-platform:
+        description: target Android platform
+        default: android-21
+        required: false
+        type: string
+
+jobs:
+  build-lldb:
+    uses: ./.github/workflows/build-lldb.yml
+
+  test-lldb-android:
+    needs: [ build-lldb ]
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # We don't currently have a good way to run arm64 Android emulator on
+        # the available GitHub test runners.
+        include:
+          - test-category: misc
+            processor: x86_64
+            api-level: 28
+            test-subdirs: >-
+              SourceCache/llvm/lldb/test/API
+              SourceCache/llvm/lldb/test/API/api
+              SourceCache/llvm/lldb/test/API/lang
+              SourceCache/llvm/lldb/test/API/linux
+              SourceCache/llvm/lldb/test/API/tools
+              SourceCache/llvm/lldb/test/API/sanity
+              SourceCache/llvm/lldb/test/API/types
+
+          - test-category: commands
+            processor: x86_64
+            api-level: 28
+            test-subdirs: >-
+              SourceCache/llvm/lldb/test/API/commands
+
+          - test-category: Python API
+            processor: x86_64
+            api-level: 28
+            test-subdirs: >-
+              SourceCache/llvm/lldb/test/API/python_api
+
+          - test-category: functionalities
+            processor: x86_64
+            api-level: 28
+            test-subdirs: >-
+              SourceCache/llvm/lldb/test/API/functionalities
+
+    name: Android ${{ matrix.processor }} test ${{ matrix.test-category}}
+
+    steps:
+      - name: free-up disk space
+        run: |
+          df -h /home
+          sudo apt purge -q aspnetcore-* \
+                            azure-* \
+                            containerd.io \
+                            containernetworking-plugins \
+                            docker-ce* \
+                            dotnet-* \
+                            firefox \
+                            gfortran-* \
+                            google-chrome-stable \
+                            google-cloud-cli* \
+                            kubectl \
+                            linux-azure-* \
+                            linux-modules-*-azure \
+                            microsoft-edge-stable \
+                            mono-* \
+                            monodoc-* \
+                            msbuild \
+                            mysql-* \
+                            podman \
+                            postgresql-* \
+                            powershell \
+                            r-base-core \
+                            vim-runtime
+          sudo apt autoremove
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /var/lib/docker
+          sudo rm -rf /usr/share/swift
+          df -h /home
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: llvm-${{ runner.os }}-${{ runner.arch }}
+          path: ${{ github.workspace }}/BinaryCache
+      - name: untar llvm artifacts
+        run: |
+          tar -C ${{ github.workspace }}/BinaryCache -xvf ${{ github.workspace }}/BinaryCache/llvm.tar
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: llvm-android-${{ matrix.processor }}
+          path: ${{ github.workspace }}/BinaryCache
+      - name: untar llvm Android artifacts
+        run: |
+          tar -C ${{ github.workspace }}/BinaryCache -xvf ${{ github.workspace }}/BinaryCache/llvm-android.tar
+
+      - name: Checkout llvm project
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: ${{ inputs.llvm_ref }}
+          path: ${{ github.workspace }}/SourceCache/llvm
+
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: ${{ inputs.android-ndk-version }}
+          local-cache: true
+
+      # Cache the contents of $HOME/.android which contains emulators,
+      # snapshots, and adb state.
+      - name: Setup AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: ~/.android/**
+          key: avd-${{ runner.os }}-${{ matrix.processor }}-${{ matrix.api-level }}
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.processor }}
+          force-avd-creation: false
+          emulator-options: -no-window -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+
+      - name: Run lldb tests against lldb-server on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.processor }}
+          force-avd-creation: false
+          # NOTE: -no-snapshot will not load or save state and the emulator will
+          # cold boot. Ideally, we would specify -no-snapshot-save instead so it
+          # would load the snapshot created in the caching step (but not save a
+          # new one). However, doing that causes the emulator to hang during
+          # shutdown. We're still saving time by reusing the device created in
+          # the caching step and not wiping userdata on boot.
+          emulator-options: -no-snapshot -no-window -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: >
+            $ANDROID_SDK_ROOT/platform-tools/adb forward tcp:5432 tcp:5432
+
+            $ANDROID_SDK_ROOT/platform-tools/adb push "${{ github.workspace }}/BinaryCache/llvm-android/bin/lldb-server" /data/local/tmp
+
+            $ANDROID_SDK_ROOT/platform-tools/adb shell "chmod +x /data/local/tmp/lldb-server"
+
+            $ANDROID_SDK_ROOT/platform-tools/adb shell "/data/local/tmp/lldb-server platform --server --daemonize --listen localhost:5432"
+
+            ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest
+            --out-of-tree-debugserver
+            --arch ${{ matrix.processor}}
+            --platform-name remote-android
+            --platform-url connect://localhost:5432
+            --platform-working-dir /data/local/tmp
+            --compiler=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
+            ${{ matrix.test-subdirs }}
+
