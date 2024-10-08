@@ -44,6 +44,8 @@ jobs:
         with:
           key: lldb-${{ runner.os }}-${{ runner.arch }}
           variant: sccache
+          max-size: 1024M
+
 
       - name: Checkout llvm project
         uses: actions/checkout@v4
@@ -129,6 +131,7 @@ jobs:
         with:
           key: lldb-android-${{ matrix.abi }}
           variant: sccache
+          max-size: 1024M
 
       - name: Checkout llvm project
         uses: actions/checkout@v4
