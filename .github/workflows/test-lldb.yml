@@ -172,6 +172,7 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: ${{ matrix.processor }}
+          disk-size: 4G
           force-avd-creation: false
           emulator-options: -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: false
