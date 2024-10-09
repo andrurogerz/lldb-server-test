@@ -199,7 +199,7 @@ jobs:
 
             $ANDROID_SDK_ROOT/platform-tools/adb shell "chmod +x /data/local/tmp/lldb-server"
 
-            $ANDROID_SDK_ROOT/platform-tools/adb shell "/data/local/tmp/lldb-server platform --server --daemonize --listen localhost:5432"
+            $ANDROID_SDK_ROOT/platform-tools/adb shell "/data/local/tmp/lldb-server platform --server --listen localhost:5432" &
 
             ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest
             --out-of-tree-debugserver
