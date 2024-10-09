@@ -3,41 +3,17 @@ name: Test LLDB Server
 on:
   workflow_call:
     inputs:
-      llvm-ref:
-        description: ref/tag for llvm-project
-        default: main
-        required: false
-        type: string
-
       android-ndk-version:
         description: version of Android NDK
         default: r21e
-        required: false
-        type: string
-
-      android-platform:
-        description: target Android platform
-        default: android-21
         required: false
         type: string
 
   workflow_dispatch:
     inputs:
-      llvm-ref:
-        description: ref/tag for llvm-project
-        default: main
-        required: false
-        type: string
-
       android-ndk-version:
-        description: version of Android NDK
+        description: version of Android NDK used to compile test inferiors
         default: r21e
-        required: false
-        type: string
-
-      android-platform:
-        description: target Android platform
-        default: android-21
         required: false
         type: string
 
@@ -52,40 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # We don't currently have a good way to run arm64 Android emulator on
-        # the available GitHub test runners.
         include:
-          - test-category: misc
-            processor: x86_64
+          - arch: x86_64
             api-level: 28
-            test-subdirs: >-
-              SourceCache/llvm/lldb/test/API
-              SourceCache/llvm/lldb/test/API/api
-              SourceCache/llvm/lldb/test/API/lang
-              SourceCache/llvm/lldb/test/API/linux
-              SourceCache/llvm/lldb/test/API/tools
-              SourceCache/llvm/lldb/test/API/sanity
-              SourceCache/llvm/lldb/test/API/types
 
-          - test-category: commands
-            processor: x86_64
-            api-level: 28
-            test-subdirs: >-
-              SourceCache/llvm/lldb/test/API/commands
-
-          - test-category: Python API
-            processor: x86_64
-            api-level: 28
-            test-subdirs: >-
-              SourceCache/llvm/lldb/test/API/python_api
-
-          - test-category: functionalities
-            processor: x86_64
-            api-level: 28
-            test-subdirs: >-
-              SourceCache/llvm/lldb/test/API/functionalities
-
-    name: Android ${{ matrix.processor }} test ${{ matrix.test-category}}
+    name: Android ${{ matrix.arch}} test
 
     steps:
       - name: free-up disk space
@@ -131,7 +78,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: llvm-android-${{ matrix.processor }}
+          name: llvm-android-${{ matrix.arch }}
           path: ${{ github.workspace }}/BinaryCache
       - name: untar llvm Android artifacts
         run: |
@@ -158,7 +105,7 @@ jobs:
         id: avd-cache
         with:
           path: ~/.android/**
-          key: avd-${{ runner.os }}-${{ matrix.processor }}-${{ matrix.api-level }}
+          key: avd-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.api-level }}
 
       - name: Enable KVM
         run: |
@@ -171,7 +118,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.processor }}
+          arch: ${{ matrix.arch }}
           disk-size: 4G
           force-avd-creation: false
           emulator-options: -no-window -noaudio -no-boot-anim -camera-back none
@@ -182,7 +129,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.processor }}
+          arch: ${{ matrix.arch }}
           force-avd-creation: false
           # NOTE: -no-snapshot will not load or save state and the emulator will
           # cold boot. Ideally, we would specify -no-snapshot-save instead so it
@@ -203,10 +150,9 @@ jobs:
 
             ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest
             --out-of-tree-debugserver
-            --arch ${{ matrix.processor}}
+            --arch ${{ matrix.arch }}
             --platform-name remote-android
             --platform-url connect://localhost:5432
             --platform-working-dir /data/local/tmp
             --compiler=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
-            ${{ matrix.test-subdirs }}
 
