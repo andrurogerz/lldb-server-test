@@ -5,7 +5,7 @@ on:
     inputs:
       android-ndk-version:
         description: version of Android NDK
-        default: r21e
+        default: r27b
         required: false
         type: string
 
@@ -13,7 +13,7 @@ on:
     inputs:
       android-ndk-version:
         description: version of Android NDK used to compile test inferiors
-        default: r21e
+        default: r27b
         required: false
         type: string
 
@@ -124,5 +124,5 @@ jobs:
             --platform-name remote-android
             --platform-url connect://localhost:5432
             --platform-working-dir /data/local/tmp
-            --compiler=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
+            --compiler=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/${{ matrix.arch }}-linux-android${{ matrix.api-level }}-clang
 
