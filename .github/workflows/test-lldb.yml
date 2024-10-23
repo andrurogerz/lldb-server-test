@@ -2,20 +2,7 @@ name: Test LLDB Server
 
 on:
   workflow_call:
-    inputs:
-      android-ndk-version:
-        description: version of Android NDK
-        default: r27b
-        required: false
-        type: string
-
   workflow_dispatch:
-    inputs:
-      android-ndk-version:
-        description: version of Android NDK used to compile test inferiors
-        default: r27b
-        required: false
-        type: string
 
 jobs:
   build-lldb:
@@ -63,12 +50,6 @@ jobs:
           repository: llvm/llvm-project
           ref: ${{ inputs.llvm_ref }}
           path: ${{ github.workspace }}/SourceCache/llvm
-
-      - uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: ${{ inputs.android-ndk-version }}
-          local-cache: true
 
       # Cache the contents of $HOME/.android which contains emulators,
       # snapshots, and adb state.
@@ -126,6 +107,6 @@ jobs:
             --platform-name remote-android
             --platform-url connect://localhost:5432
             --platform-working-dir /data/local/tmp
-            --compiler=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/${{ matrix.arch }}-linux-android${{ matrix.api-level }}-clang
+            --compiler=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/${{ matrix.arch }}-linux-android${{ matrix.api-level }}-clang
             --excluded=${{ github.workspace }}/Excluded/android-${{ matrix.arch }}.excluded
 
