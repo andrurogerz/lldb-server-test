@@ -37,6 +37,8 @@ jobs:
     steps:
       - uses: andrurogerz/action-spacemaker@main
 
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: llvm-${{ runner.os }}-${{ runner.arch }}
@@ -125,4 +127,5 @@ jobs:
             --platform-url connect://localhost:5432
             --platform-working-dir /data/local/tmp
             --compiler=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/${{ matrix.arch }}-linux-android${{ matrix.api-level }}-clang
+            --excluded=${{ github.workspace }}/Excluded/android-${{ matrix.arch }}.excluded
 
