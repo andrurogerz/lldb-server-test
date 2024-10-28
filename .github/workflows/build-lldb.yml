@@ -70,7 +70,7 @@ jobs:
       - name: Build llvm
         run: |
           cmake --build  ${{ github.workspace }}/BinaryCache/llvm               \
-                --target lldb                                                   \
+                --target tools/lldb/test/API/lldb-api-test-deps                 \
                 --config Release
 
       # Tar the build output to preserve permissions.
