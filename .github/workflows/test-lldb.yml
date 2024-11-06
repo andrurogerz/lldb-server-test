@@ -109,4 +109,5 @@ jobs:
             --platform-working-dir /data/local/tmp
             --compiler=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/${{ matrix.arch }}-linux-android${{ matrix.api-level }}-clang
             --excluded=${{ github.workspace }}/Excluded/android-${{ matrix.arch }}.excluded
+            -v
 
