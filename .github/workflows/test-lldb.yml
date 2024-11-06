@@ -101,7 +101,7 @@ jobs:
 
             $ANDROID_SDK_ROOT/platform-tools/adb shell "/data/local/tmp/lldb-server platform --server --listen localhost:5432" &
 
-            ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest
+            ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest 1>/dev/null
             --out-of-tree-debugserver
             --arch ${{ matrix.arch }}
             --platform-name remote-android
