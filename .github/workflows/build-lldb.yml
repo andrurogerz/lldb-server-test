@@ -37,6 +37,10 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: install dependencies
+        run:
+          sudo apt install lzma-dev
+
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Setup sccache
@@ -93,6 +97,10 @@ jobs:
 
     steps:
       - uses: andrurogerz/action-spacemaker@main
+
+      - name: install dependencies
+        run:
+          sudo apt install lzma-dev
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
