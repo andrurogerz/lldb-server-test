@@ -64,7 +64,7 @@ jobs:
       - name: Setup sccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: lldb-${{ runner.os }}-${{ runner.arch }}
+          key: llvm-${{ inputs.llvm-ref }}-${{ runner.os }}-${{ runner.arch }}
           variant: sccache
           max-size: 1024M
 
@@ -124,7 +124,7 @@ jobs:
       - name: Setup sccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: lldb-android-${{ matrix.abi }}
+          key: llvm-${{ inputs.llvm-ref }}-${{ inputs.android-platform }}-${{ matrix.abi }}
           variant: sccache
           max-size: 1024M
 
