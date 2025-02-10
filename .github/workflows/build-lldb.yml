@@ -34,14 +34,32 @@ env:
 
 jobs:
   build-lldb-linux:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ ubuntu-24.04, ubuntu-24.04-arm ]
 
     steps:
       - name: install dependencies
         run:
           sudo apt install lzma-dev
 
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - if: ${{ !contains(matrix.runner, 'arm') }}
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - if: contains(matrix.runner, 'arm')
+        uses: seanmiddleditch/gha-setup-ninja@v5
+        with:
+          # TODO(andrurogerz): seanmiddleditch/gha-setup-ninja does not properly
+          # detect Linux on arm64 and always installs the x86_64 ninja package.
+          # For now, we can fix this by overriding the platform string to force
+          # the downloading the proper package. We also require a newer ninja
+          # version since aarch64 packages were not released until v1.12.0 and
+          # the default gha-setup-ninja installs is v1.11.1.
+          platform: linux-aarch64
+          version: 1.12.1 # latest sccache version
 
       - name: Setup sccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -49,7 +67,6 @@ jobs:
           key: lldb-${{ runner.os }}-${{ runner.arch }}
           variant: sccache
           max-size: 1024M
-
 
       - name: Checkout llvm project
         uses: actions/checkout@v4
@@ -74,7 +91,7 @@ jobs:
       - name: Build llvm
         run: |
           cmake --build  ${{ github.workspace }}/BinaryCache/llvm               \
-                --target tools/lldb/test/API/lldb-api-test-deps                 \
+                --target tools/lldb/test/API/lldb-api-test-deps lldb-server     \
                 --config Release
 
       # Tar the build output to preserve permissions.
