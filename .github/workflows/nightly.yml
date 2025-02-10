@@ -10,4 +10,11 @@ on:
 
 jobs:
   build:
+    matrix:
+      llvm-ref: [ main, llvmorg-20.1.0-rc1 ]
+      android-platform: [ android-28 ]
+
     uses: ./.github/workflows/test-lldb.yml
+    with:
+      llvm-ref: ${{ matrix.llvm-ref }}
+      android-platform: ${{ matrix.android-platform }}

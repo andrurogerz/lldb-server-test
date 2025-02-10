@@ -2,11 +2,39 @@ name: Test LLDB Server
 
 on:
   workflow_call:
+    inputs:
+      llvm-ref:
+        description: ref/tag for llvm-project
+        default: main
+        required: false
+        type: string
+
+      android-platform:
+        description: target Android platform
+        default: android-28
+        required: false
+        type: string
+
   workflow_dispatch:
+    inputs:
+      llvm-ref:
+        description: ref/tag for llvm-project
+        default: main
+        required: false
+        type: string
+
+      android-platform:
+        description: target Android platform
+        default: android-28
+        required: false
+        type: string
 
 jobs:
   build-lldb:
     uses: ./.github/workflows/build-lldb.yml
+    with:
+      llvm-ref: ${{ inputs.llvm-ref }}
+      android-platform: ${{ inputs.android-platform }}
 
   test-lldb-android:
     needs: [ build-lldb ]
