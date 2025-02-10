@@ -36,6 +36,48 @@ jobs:
       llvm-ref: ${{ inputs.llvm-ref }}
       android-platform: ${{ inputs.android-platform }}
 
+  test-lldb-linux:
+    needs: [ build-lldb ]
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ ubuntu-24.04, ubuntu-24.04-arm ]
+
+    steps:
+      - uses: andrurogerz/action-spacemaker@main
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: llvm-${{ runner.os }}-${{ runner.arch }}
+          path: ${{ github.workspace }}/BinaryCache
+      - name: untar llvm artifacts
+        run: |
+          tar -C ${{ github.workspace }}/BinaryCache -xvf ${{ github.workspace }}/BinaryCache/llvm.tar
+          rm -f ${{ github.workspace }}/BinaryCache/llvm.tar
+
+      - name: Checkout llvm project
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: ${{ inputs.llvm_ref }}
+          path: ${{ github.workspace }}/SourceCache/llvm
+
+      - run: |
+          mkdir -p ${{ github.workspace }}/temp
+          ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-server platform --server --listen localhost:5432 &
+          ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest 1>/dev/null  \
+              --out-of-tree-debugserver                                         \
+              --arch ${{ runner.arch }}                                         \
+              --platform-name remote-linux                                      \
+              --platform-url connect://localhost:5432                           \
+              --platform-working-dir ${{ github.workspace }}/temp               \
+              --excluded=${{ github.workspace }}/Excluded/linux-${{ matrix.arch }}.excluded \
+              -v
+
   test-lldb-android:
     needs: [ build-lldb ]
     runs-on: ubuntu-24.04
