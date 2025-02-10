@@ -46,8 +46,6 @@ jobs:
         runner: [ ubuntu-24.04, ubuntu-24.04-arm ]
 
     steps:
-      - uses: andrurogerz/action-spacemaker@main
-
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
@@ -75,7 +73,7 @@ jobs:
               --platform-name remote-linux                                      \
               --platform-url connect://localhost:5432                           \
               --platform-working-dir ${{ github.workspace }}/temp               \
-              --excluded=${{ github.workspace }}/Excluded/linux-${{ matrix.arch }}.excluded \
+              --excluded=${{ github.workspace }}/Excluded/linux-${{ runner.arch }}.excluded \
               -v
 
   test-lldb-android:
