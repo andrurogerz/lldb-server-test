@@ -74,12 +74,12 @@ jobs:
       - run: |
           mkdir -p ${{ github.workspace }}/temp
           ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-server platform --server --listen localhost:5432 &
-          ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest  \
-              --out-of-tree-debugserver                             \
-              --arch ${{ matrix.arch }}                             \
-              --platform-name remote-linux                          \
-              --platform-url connect://localhost:5432               \
-              --platform-working-dir ${{ github.workspace }}/temp   \
+          ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest 1>/dev/null  \
+              --out-of-tree-debugserver                                         \
+              --arch ${{ matrix.arch }}                                         \
+              --platform-name remote-linux                                      \
+              --platform-url connect://localhost:5432                           \
+              --platform-working-dir ${{ github.workspace }}/temp               \
               --excluded=${{ github.workspace }}/Excluded/linux-${{ matrix.arch }}.excluded \
               -v
 
