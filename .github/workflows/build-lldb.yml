@@ -126,7 +126,7 @@ jobs:
         with:
           key: llvm-${{ inputs.llvm-ref }}-${{ inputs.android-platform }}-${{ matrix.abi }}
           variant: sccache
-          max-size: 1024M
+          max-size: 2048M
 
       - name: Checkout llvm project
         uses: actions/checkout@v4
