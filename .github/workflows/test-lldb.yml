@@ -67,7 +67,7 @@ jobs:
       - run: |
           mkdir -p ${{ github.workspace }}/temp
           ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-server platform --server --listen localhost:5432 &
-          ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest 1>/dev/null  \
+          ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest              \
               --out-of-tree-debugserver                                         \
               --arch ${{ runner.arch }}                                         \
               --platform-name remote-linux                                      \
