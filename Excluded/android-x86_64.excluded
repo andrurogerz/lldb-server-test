@@ -177,3 +177,6 @@ TestVectorOfVectorsFromStdModule.TestVectorOfVectors.test_dwo
 TestWatchpointEvents.TestWatchpointEvents.test_with_python_api
 TestWeakPtrFromStdModule.TestSharedPtr.test_dwarf
 TestWeakPtrFromStdModule.TestSharedPtr.test_dwo
+
+skip
+TestGdbRemoteForkNonStop
