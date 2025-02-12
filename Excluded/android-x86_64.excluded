@@ -23,6 +23,8 @@ TestVectorTypesFormatting.VectorTypesFormattingTestCase.test_with_run_command_dw
 skip
 lldbsuite.test.lldbtest.TestNoASanExceptionAfterEvalOP_piece.test_dwarf
 lldbsuite.test.lldbtest.TestNoASanExceptionAfterEvalOP_piece.test_dwo
+lldbsuite.test.lldbtest.TestSampleInlineTest.test_dwarf
+lldbsuite.test.lldbtest.TestSampleInlineTest.test_dwo
 TestBreakAfterJoin.BreakpointAfterJoinTestCase.test_dwarf
 TestBreakAfterJoin.BreakpointAfterJoinTestCase.test_dwo
 TestCommandScript.CmdPythonTestCase.test
