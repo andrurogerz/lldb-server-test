@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: install dependencies
         run:
-          sudo apt install lzma-dev
+          sudo apt install lzma-dev liblzma-dev
 
       - if: ${{ !contains(matrix.runner, 'arm') }}
         uses: seanmiddleditch/gha-setup-ninja@v5
@@ -116,7 +116,7 @@ jobs:
     steps:
       - name: install dependencies
         run:
-          sudo apt install lzma-dev
+          sudo apt install lzma-dev liblzma-dev
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
