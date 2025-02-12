@@ -113,8 +113,6 @@ jobs:
             triple: x86_64-unknown-linux-android
 
     steps:
-      - uses: andrurogerz/action-spacemaker@main
-
       - name: install dependencies
         run:
           sudo apt install lzma-dev
