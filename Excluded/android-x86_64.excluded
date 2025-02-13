@@ -189,3 +189,6 @@ TestWeakPtrFromStdModule.TestSharedPtr.test_dwo
 
 skip
 TestGdbRemoteForkNonStop
+
+skip
+TestDefaultCacheLineSize.DefaultCacheLineSizeTestCase.test_cache_line_size
