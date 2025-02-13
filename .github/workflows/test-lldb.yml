@@ -73,7 +73,7 @@ jobs:
 
       - name: Run lldb tests
         run: |
-          export LLVM_SYMBOLIZER_PATH=${{ github.workspace }}//BinalryCache/llvm/bin/llvm-symbolizer
+          export LLVM_SYMBOLIZER_PATH=${{ github.workspace }}/BinaryCache/llvm/bin/llvm-symbolizer
           mkdir -p ${{ github.workspace }}/temp
           ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-server platform --server --listen localhost:5432 &
           ${{ github.workspace }}/BinaryCache/llvm/bin/lldb-dotest 1>/dev/null  \
@@ -170,7 +170,7 @@ jobs:
           emulator-options: -no-snapshot -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: >
-            export LLVM_SYMBOLIZER_PATH=${{ github.workspace }}//BinalryCache/llvm/bin/llvm-symbolizer
+            export LLVM_SYMBOLIZER_PATH=${{ github.workspace }}/BinaryCache/llvm/bin/llvm-symbolizer
 
             $ANDROID_SDK_ROOT/platform-tools/adb forward tcp:5432 tcp:5432
 
